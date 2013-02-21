@@ -27,6 +27,9 @@ $('.ajax-action').bind('click', function(e){
 
 //object models which contain our CBs
 var user = {
+ update_dom: function (json){
+    $('.user_picture').attr('src',json.result.icon);
+ },
  add_dan_cb: function (json){
     //call back for add_dan as defined in the DOM data attribute
     if (json.status === 'error'){
@@ -74,10 +77,15 @@ compared_with_dan: function (json){
 
 }
 
+
 //alias the return 
 return {
     user: user 
 }
 
 })(jQuery);//pass jquery back as a param
+
+
+//docready calls
+$(document).ready( $.getJSON('/index.php/api/get_current_user', tmh.user.update_dom) )
 

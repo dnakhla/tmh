@@ -4,6 +4,7 @@
             <h1>(TMH)</h1>
             <div class="row">
                 <div class="span3">
+                    <p><img class='user_picture'> </p>
                     <small>account section:</small>
                     <p><a class="btn btn-mini" href="/index.php/api/logout"><i class="icon-user"></i>  Log out  &raquo;</a></p>
                     <h5>Some Things you Can Do (JS/PHP):</h5>
@@ -14,7 +15,7 @@
                             data-action='compare_with_dan' 
                             href="#">
                             <i class='icon-headphones'></i> 
-                            See if you and <strong>Daniel Nakhla</strong> have similiar taste based on your who you listen to
+                            See if you and <strong>Daniel Nakhla</strong> have similiar taste in music based on who you listen to
                             </a>
                         </p>
                     </li>
@@ -24,7 +25,7 @@
                             data-action='add_dan'
                             href="#">
                             <i class='icon-plus-sign'></i> 
-                            Add <strong>Daniel Nakhla</strong> to your Friends<br/>(if he has amazing taste in music)
+                            Add <strong>Daniel Nakhla</strong> to your Friends
                             </a>
                         </p>
                     </li>
