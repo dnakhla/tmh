@@ -4,10 +4,10 @@
             <h1>(TMH)</h1>
             <div class="row">
                 <div class="span3">
-                    <p><img class='user_picture'> </p>
+                    <p><img class='user_picture' alt='user picture'> </p>
                     <small>account section:</small>
                     <p><a class="btn btn-mini" href="/index.php/api/logout"><i class="icon-user"></i>  Log out  &raquo;</a></p>
-                    <h5>Some Things you Can Do (JS/PHP):</h5>
+                    <h5>Some Things you Can Do:</h5>
                     <ol>
                      <li>
                         <p>
