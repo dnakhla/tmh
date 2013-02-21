@@ -4,42 +4,121 @@ if (!defined('BASEPATH'))
 
 class Api extends CI_Controller
 {
-    // we'll be using this guy in our other controllers
-    public $rdio = null;
+    public function __construct()
+    {
+        parent::__construct();
+    }
     
     public function logout()
     {
         $this->session->sess_destroy();
-        echo "Session:";
-        print_r($this->session->all_userdata());
-        exit;
+        redirect('/home/index', 'location');
+    }
+    
+    public function get_current_user()
+    {
+     if ($this->session->userdata('logged_in')){
+        $this->load->library('rdio');
+        $rdio = new Rdio(array(
+            $this->config->item('RDIO_CONSUMER_KEY'),
+            $this->config->item('RDIO_CONSUMER_SECRET')
+        ), array(
+            $this->session->userdata('oauth_token'),
+            $this->session->userdata('oauth_token_secret')
+        ));
+        $cu = $rdio->call('currentUser');
+        echo json_encode($cu); 
+     }else{
+        show_error('You\'re not logged in - come on man', 401);
+     }
+    }
+
+    public function compare_with_dan()
+    {
+     if ($this->session->userdata('logged_in')){
+        $this->load->library('rdio');
+        $rdio = new Rdio(array(
+            $this->config->item('RDIO_CONSUMER_KEY'),
+            $this->config->item('RDIO_CONSUMER_SECRET')
+        ), array(
+            $this->session->userdata('oauth_token'),
+            $this->session->userdata('oauth_token_secret')
+        ));
+        $dan_music = $rdio->call('getHeavyRotation',
+            array('user'=> $this->config->item('daniel_nakhla_id'), 'type'=>'artists'));
+        $user_music = $rdio->call('getHeavyRotation',
+            array('user'=> $rdio->call('currentUser')->result->key, 'type'=>'artists'));
+        //get common artists here
+        $common = array ();
+        foreach ($dan_music->result as $dan_artist){
+            foreach ($user_music->result as $user_artist){
+               if ($dan_artist->name === $user_artist->name){
+                $common[]=$dan_artist;
+               }
+            }
+        }
+        echo json_encode($common);
+     }else{
+        show_error('You\'re not logged in - come on man', 401);
+     }
+    }
+
+     public function add_dan()
+    {
+     if ($this->session->userdata('logged_in')){
+        $this->load->library('rdio');
+        $rdio = new Rdio(array(
+            $this->config->item('RDIO_CONSUMER_KEY'),
+            $this->config->item('RDIO_CONSUMER_SECRET')
+        ), array(
+            $this->session->userdata('oauth_token'),
+            $this->session->userdata('oauth_token_secret')
+        ));
+        $cu = $rdio->call('addFriend',array('user'=> $this->config->item('daniel_nakhla_id')));
+        echo json_encode($cu);
+     }else{
+        show_error('You\'re not logged in - come on man', 401);
+     }
+    }
+
+    public function auth()
+    {
+        $this->session->unset_userdata('oauth_token_secret');
+        $this->session->unset_userdata('oauth_token');
+        // set up our call back
+        $callback_url = "http" . ((!empty($_SERVER['HTTPS'])) ? "s" : "") . "://" . $_SERVER['SERVER_NAME'] . '/index.php/api/auth_callback';
+        $this->load->library('rdio');
+        $rdio    = new Rdio(array(
+            $this->config->item('RDIO_CONSUMER_KEY'),
+            $this->config->item('RDIO_CONSUMER_SECRET')
+        ));
+        $authorize_url = $rdio->begin_authentication($callback_url);
+        $this->session->set_userdata('oauth_token', $rdio->token[0]);
+        $this->session->set_userdata('oauth_token_secret', $rdio->token[1]);
+        redirect($authorize_url, 'refresh');
     }
     
     public function auth_callback()
     {
         if ($this->session->userdata('oauth_token') && $this->session->userdata('oauth_token_secret')) {
             $this->load->library('rdio');
-            $this->rdio = new Rdio(array(
+            $rdio = new Rdio(array(
                 $this->config->item('RDIO_CONSUMER_KEY'),
                 $this->config->item('RDIO_CONSUMER_SECRET')
             ), array(
                 $this->session->userdata('oauth_token'),
                 $this->session->userdata('oauth_token_secret')
             ));
-            
-            $this->rdio->token = array(
-                $this->session->userdata('oauth_token'),
-                $this->session->userdata('oauth_token_secret')
-            );
-            if ($_GET['oauth_verifier']) {
+            if (isset($_GET['oauth_verifier'])) {
                 // we've been passed a verifier, that means that we're in the middle of authentication.
-                $this->rdio->complete_authentication($_GET['oauth_verifier']);
+                $rdio->complete_authentication($_GET['oauth_verifier']);
                 // save the new token in our session
-                $this->session->set_userdata('oauth_token', $this->rdio->token[0]);
-                $this->session->set_userdata('oauth_token_secret', $this->rdio->token[1]);
-                $currentUser = $this->rdio->call('currentUser');
-                var_dump($currentUser);
+                $this->session->set_userdata('oauth_token', $rdio->token[0]);
+                $this->session->set_userdata('oauth_token_secret', $rdio->token[1]);
+                // i know we don't NEED this, but its nice to have a dedicated value for this
+                $this->session->set_userdata('logged_in', TRUE); 
             }
+            redirect('/home/inside', 'refresh');
         } else {
             //try to authenticate again, we dont have the session keys, 
             //we got here by accident
@@ -47,25 +126,4 @@ class Api extends CI_Controller
         }
     }
     
-    public function auth()
-    {
-        //check session for token data
-        if ($this->session->userdata('oauth_token') && $this->session->userdata('oauth_token_secret')) {
-            //we already have the tokens in our session no need to request them
-            $this->auth_callback();
-        } else {
-            // set up our call back
-            $callback_url = "http" . ((!empty($_SERVER['HTTPS'])) ? "s" : "") . "://" 
-            . $_SERVER['SERVER_NAME'] . '/index.php/api/auth_callback';
-            $this->load->library('rdio');
-            $this->rdio    = new Rdio(array(
-                $this->config->item('RDIO_CONSUMER_KEY'),
-                $this->config->item('RDIO_CONSUMER_SECRET')
-            ));
-            $authorize_url = $this->rdio->begin_authentication($callback_url);
-            $this->session->set_userdata('oauth_token', $this->rdio->token[0]);
-            $this->session->set_userdata('oauth_token_secret', $this->rdio->token[1]);
-            header('Location: ' . $authorize_url);
-        }
-    }
 }
