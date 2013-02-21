@@ -29,7 +29,7 @@
                             </a>
                         </p>
                     </li>
-                    <li>
+                    <li class='hide'>
                         <p>
                             <a class="btn btn-mini ajax-action" 
                             data-action='call_dan'
